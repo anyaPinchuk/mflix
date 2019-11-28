@@ -11,11 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.mongodb.client.model.Aggregates.match;
-import static java.util.Arrays.asList;
 
 @Component
 public class MovieDao extends AbstractMFlixDao {
@@ -64,16 +62,16 @@ public class MovieDao extends AbstractMFlixDao {
         }
 
         List<Bson> pipeline = new ArrayList<>();
-        // match stage to find movie
-        Bson matchStage = match(Filters.eq("_id", new ObjectId(movieId)));
+        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+        pipeline.add(match);
         Bson lookup = new Document("$lookup",
                 new Document("from", "comments")
                         .append("let", new Document("id", "$_id"))
-                        .append("pipeline", asList(
-                                new Document("$match", new Document("$expr", new Document("$eq", asList("$movie_id", "$$id")))),
-                                new Document("$sort", new Document("date", -1))))
+                        .append("pipeline",
+                                Arrays.asList(
+                                        new Document("$match", new Document("$expr", new Document("$eq", Arrays.asList("$movie_id", "$$id")))),
+                                        new Document("$sort", new Document("date", -1))))
                         .append("as", "comments"));
-        pipeline.add(matchStage);
         pipeline.add(lookup);
         Document movie = moviesCollection.aggregate(pipeline).first();
 
@@ -273,7 +271,7 @@ public class MovieDao extends AbstractMFlixDao {
         List<Document> movies = new ArrayList<>();
         String sortKey = "tomatoes.viewer.numReviews";
         Bson skipStage = Aggregates.skip(skip);
-        Bson matchStage = match(Filters.in("cast", cast));
+        Bson matchStage = Aggregates.match(Filters.in("cast", cast));
         Bson sortStage = Aggregates.sort(Sorts.descending(sortKey));
         Bson limitStage = Aggregates.limit(limit);
         Bson facetStage = buildFacetStage();
