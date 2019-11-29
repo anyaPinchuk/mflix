@@ -1,6 +1,7 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -74,9 +75,12 @@ public class CommentDao extends AbstractMFlixDao {
     public Comment addComment(Comment comment) {
         if (comment.getId() == null)
             return null;
-        commentCollection.insertOne(comment);
-        // TODO> Ticket - Handling Errors: Implement a try catch block to
-        // handle a potential write exception when given a wrong commentId.
+        try {
+            commentCollection.insertOne(comment);
+        } catch (MongoWriteException ex) {
+            throw new IncorrectDaoOperation(ex.getMessage());
+        }
+
         return comment;
     }
 
@@ -98,12 +102,13 @@ public class CommentDao extends AbstractMFlixDao {
         Comment comment = commentCollection.find(commentFilter).first();
         Document newComment = new Document("text", text).append("date", new Date());
 
-        if (comment != null && Objects.equals(comment.getEmail(), email)) {
-            return commentCollection.updateOne(commentFilter, new Document("$set", newComment)).wasAcknowledged();
+        try {
+            if (comment != null && Objects.equals(comment.getEmail(), email)) {
+                return commentCollection.updateOne(commentFilter, new Document("$set", newComment)).wasAcknowledged();
+            }
+        } catch (MongoWriteException ex) {
         }
 
-        // TODO> Ticket - Handling Errors: Implement a try catch block to
-        // handle a potential write exception when given a wrong commentId.
         return false;
     }
 
@@ -118,12 +123,13 @@ public class CommentDao extends AbstractMFlixDao {
         Bson commentFilter = Filters.eq("_id", new ObjectId(commentId));
         Comment comment = commentCollection.find(commentFilter).first();
 
-        if (comment != null && Objects.equals(comment.getEmail(), email)) {
-            return commentCollection.deleteOne(commentFilter).wasAcknowledged();
+        try {
+            if (comment != null && Objects.equals(comment.getEmail(), email)) {
+                return commentCollection.deleteOne(commentFilter).wasAcknowledged();
+            }
+        } catch (MongoWriteException ex) {
         }
 
-        // TODO> Ticket Handling Errors - Implement a try catch block to
-        // handle a potential write exception when given a wrong commentId.
         return false;
     }
 

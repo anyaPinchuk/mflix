@@ -1,6 +1,5 @@
 package mflix.lessons;
 
-import org.springframework.boot.test.context.SpringBootTest;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.mongodb.client.MongoCollection;
@@ -16,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +84,7 @@ public class ChangeStreams extends AbstractLesson {
   */
 
   @Test
-  public void testWhatchAllInserts() {
+  public void testWatchAllInserts() {
 
     insertAndUpdateThread.start();
 
